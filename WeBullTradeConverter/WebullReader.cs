@@ -1,17 +1,7 @@
-﻿
-using System;
-using System.Globalization;
-using static WebullConverter.WebullReader;
-using System.IO;
+﻿using System.Globalization;
 
 namespace WebullConverter
 {
-  public enum Side
-  {
-    Buy,
-    Sell
-  }
-
   public class WebullReader
   {
     public class DTO
@@ -58,6 +48,7 @@ namespace WebullConverter
             continue;
           }
 
+          // remove comma in the time column
           line = line.Replace(",GMT", " GMT");
 
           var parts = line.Split(',');
@@ -212,6 +203,7 @@ namespace WebullConverter
 
     private bool TryGetDateTime(string date, string time, out DateTime dateTime)
     {
+      // Add :00 as a quick fix for now
       string combined = $"{date} {time}:00";
 
       // Define format: yyyy/MM/dd HH:mm:ss 'GMT'zzz
