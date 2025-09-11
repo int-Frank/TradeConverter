@@ -12,10 +12,8 @@ namespace WebullConverter
 
         foreach (var entry in entries)
         {
-          TimeZoneInfo nyZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-          DateTime nyTime = TimeZoneInfo.ConvertTimeFromUtc(entry.DateTime, nyZone);
-          string nyDate = nyTime.ToString("d/M/yyyy", CultureInfo.InvariantCulture);
-          string nyClock = nyTime.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
+          string nyDate = entry.DateTimeEST.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
+          string nyClock = entry.DateTimeEST.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
 
           writer.Write($"{nyDate},");
           writer.Write($"{nyClock},");
