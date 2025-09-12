@@ -48,10 +48,7 @@ namespace WebullConverter
             continue;
           }
 
-          // remove comma in the time column
-          line = line.Replace(",GMT", " GMT");
-
-          var parts = line.Split(',');
+          var parts = ParseLine(line);
           var dto = new DTO();
           int index;
 
@@ -207,7 +204,7 @@ namespace WebullConverter
       string combined = $"{date} {time}:00";
 
       // Define format: yyyy/MM/dd HH:mm:ss 'GMT'zzz
-      var format = "yyyy/MM/dd HH:mm:ss 'GMT'zzz";
+      var format = "yyyy/MM/dd HH:mm:ss,'GMT'zzz";
       var provider = CultureInfo.InvariantCulture;
 
       if (!DateTimeOffset.TryParseExact(combined, format, provider, DateTimeStyles.None, out DateTimeOffset dto))
@@ -268,6 +265,35 @@ namespace WebullConverter
       }
 
       return header;
+    }
+
+    private string[] ParseLine(string line)
+    {
+      var parts = new List<string>();
+      var field = "";
+      var readingString = false;
+
+      foreach (var c in line)
+      {
+        if (c == ',' && !readingString)
+        {
+          parts.Add(field);
+          field = "";
+          continue;
+        }
+
+        if (c == '"')
+        {
+          readingString = !readingString;
+          continue;
+        }
+
+        field += c;
+      }
+
+      parts.Add(field);
+
+      return parts.ToArray();
     }
   }
 }
