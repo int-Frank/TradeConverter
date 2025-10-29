@@ -23,7 +23,7 @@ namespace WebullConverter
 
     public DTO[] Entries { get; set; } = Array.Empty<DTO>();
 
-    public void Read(string filePath, bool fixDates)
+    public void Read(string filePath)
     {
       using (var reader = new StreamReader(filePath))
       {
@@ -92,7 +92,7 @@ namespace WebullConverter
               index >= parts.Length ||
               !header.TryGetValue("Time", out var timeIndex) ||
               timeIndex >= parts.Length ||
-              ! TryGetDateTime(Trim(parts[index]), Trim(parts[timeIndex]), fixDates, out var dateTime))
+              ! TryGetDateTime(Trim(parts[index]), Trim(parts[timeIndex]), out var dateTime))
           {
             Console.WriteLine($"Failed to read Date and Time from CSV");
             errors++;
@@ -198,7 +198,7 @@ namespace WebullConverter
       return true;
     }
 
-    private bool TryGetDateTime(string date, string time, bool fixDates, out DateTime dateTime)
+    private bool TryGetDateTime(string date, string time, out DateTime dateTime)
     {
       // Add :00 as a quick fix for now
       string combined = $"{date} {time}:00";
@@ -215,18 +215,6 @@ namespace WebullConverter
 
       TimeZoneInfo nyZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
       dateTime = TimeZoneInfo.ConvertTimeFromUtc(dto.UtcDateTime, nyZone);
-
-      if (fixDates)
-      {
-        // WeBull's reported dates seem to be incorrect for trades after midnight Brisbane time.
-        // This hack should fix that for now.
-        bool addDay = dto.Hour < 6;
-
-        if (addDay)
-        {
-          dateTime = dateTime.AddDays(1);
-        }
-      }
 
       return true;
     }

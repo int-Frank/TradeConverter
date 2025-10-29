@@ -35,7 +35,7 @@ namespace WebullConverter
         .SelectMany(file =>
         {
           var reader = new WebullReader();
-          reader.Read(file, context.FixDates);
+          reader.Read(file);
           return reader.Entries;
         })
         .DistinctBy(entry => 

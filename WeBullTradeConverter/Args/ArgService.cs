@@ -6,7 +6,6 @@ namespace WeBullTradeConverter.Args
   {
     public string InputPath { get; set; } = string.Empty;
     public string OutputPath { get; set; } = string.Empty;
-    public bool FixDates { get; set; } = false;
   }
 
   public interface IParserState
@@ -44,31 +43,6 @@ namespace WeBullTradeConverter.Args
     }
   }
 
-  public class FixDatesParser : IParserState
-  {
-    public (bool, IParserState?) ProcessToken(string token, ref ConverterContext context)
-    {
-      var falseFlags = new[] { "false", "0" };
-      var trueFlags = new[] { "true", "1" };
-
-      if (falseFlags.Contains(token.ToLower()))
-      {
-        context.FixDates = false;
-      }
-      else if (trueFlags.Contains(token.ToLower()))
-      {
-        context.FixDates = true;
-      }
-      else
-      {
-        Console.Write($"Invalid token for fix dates flag: '{token}'");
-        throw new Exception();
-      }
-
-      return (true, null);
-    }
-  }
-
   public class BaseParserState : IParserState
   {
     public (bool, IParserState?) ProcessToken(string token, ref ConverterContext context)
@@ -87,10 +61,6 @@ namespace WeBullTradeConverter.Args
       else if (token == "-o")
       {
         newState = new OutputParser();
-      }
-      else if (token == "-f")
-      {
-        newState = new FixDatesParser();
       }
       else
       {
