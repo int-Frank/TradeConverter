@@ -1,12 +1,9 @@
-﻿
-using System.IO;
-using WeBullTradeConverter.Args;
+﻿using TradeConverter.Args;
 
-namespace WebullConverter
+namespace TradeConverter
 {
   public class Program
   {
-
     static void Main(string[] args)
     {
       var program = new Program();
@@ -17,7 +14,7 @@ namespace WebullConverter
       program.Run(context);
     }
 
-    public void Run(ConverterContext context)
+    private void Run(ConverterContext context)
     {
       if (!Directory.Exists(context.InputPath))
       {
@@ -29,15 +26,16 @@ namespace WebullConverter
         Console.WriteLine("Invalid output path");
       }
 
-      string[] csvFiles = Directory.GetFiles(context.InputPath, "*.csv");
+      string[] extensions = { ".csv", ".txt" };
 
-      var transactions  = csvFiles
-        .SelectMany(file =>
-        {
-          var reader = new WebullReader();
-          reader.Read(file);
-          return reader.Entries;
-        })
+      var files = Directory
+        .EnumerateFiles(context.InputPath)
+        .Where(f => extensions.Any(ext =>
+            f.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))
+        .ToArray();
+
+      var transactions  = files
+        .SelectMany(file => ReadEntries(file))
         .DistinctBy(entry => 
         (
           entry.Symbol,
@@ -72,6 +70,24 @@ namespace WebullConverter
         var writer = new CSVWriter();
         writer.WriteToFile(fullPath, entries);
       }
+    }
+
+    private TradeEntry[] ReadEntries(string file)
+    {
+      var entries = Array.Empty<TradeEntry>();
+
+      if (new WebullReader().TryRead(file, out entries))
+      {
+        return entries;
+      }
+
+      if (new WarriorTradingSimReader().TryRead(file, out entries))
+      {
+        return entries;
+      }
+
+      Console.WriteLine($"Failed to identify file '{file}'");
+      return Array.Empty<TradeEntry>();
     }
   }
 }

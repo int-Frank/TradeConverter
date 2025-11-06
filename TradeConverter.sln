@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35707.178 d17.12
+VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeBullTradeConverter", "WeBullTradeConverter\WeBullTradeConverter.csproj", "{FA0AF40F-C9F9-4A80-BE24-A34696466F07}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TradeConverter", "TradeConverter\TradeConverter.csproj", "{FA0AF40F-C9F9-4A80-BE24-A34696466F07}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

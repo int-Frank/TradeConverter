@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WeBullTradeConverter": {
+      "commandName": "Project",
+      "commandLineArgs": "-i \"..\\..\\..\\test files\" -o \"C:\\temp\\trade_converter_output\""
+    }
+  }
+}

@@ -1,10 +1,10 @@
 ﻿using System.Globalization;
 
-namespace WebullConverter
+namespace TradeConverter
 {
   public class CSVWriter
   {
-    public void WriteToFile(string filePath, WebullReader.DTO[] entries)
+    public void WriteToFile(string filePath, TradeEntry[] entries)
     {
       using (StreamWriter writer = new StreamWriter(filePath))
       {

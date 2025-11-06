@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace WeBullTradeConverter.Args
+﻿namespace TradeConverter.Args
 {
   public class ConverterContext
   {
@@ -17,13 +15,14 @@ namespace WeBullTradeConverter.Args
   {
     public (bool, IParserState?) ProcessToken(string token, ref ConverterContext context)
     {
-      if (!Directory.Exists(token))
+      var path = Path.GetFullPath(token);
+      if (!Directory.Exists(path))
       {
-        Console.Write($"Invalid input path: '{token}'");
+        Console.Write($"Invalid input path: '{path}'");
         throw new Exception();
       }
 
-      context.InputPath = token;
+      context.InputPath = path;
       return (true, null);
     }
   }
@@ -32,13 +31,14 @@ namespace WeBullTradeConverter.Args
   {
     public (bool, IParserState?) ProcessToken(string token, ref ConverterContext context)
     {
-      if (!Directory.Exists(token))
+      var path = Path.GetFullPath(token);
+      if (!Directory.Exists(path))
       {
-        Console.Write($"Invalid output path: '{token}'");
+        Console.Write($"Invalid output path: '{path}'");
         throw new Exception();
       }
 
-      context.OutputPath = token;
+      context.OutputPath = path;
       return (true, null);
     }
   }

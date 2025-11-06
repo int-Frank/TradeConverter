@@ -1,4 +1,4 @@
-﻿namespace WebullConverter
+﻿namespace TradeConverter
 {
   public enum Side
   {

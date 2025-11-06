@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "WeBullTradeConverter": {
-      "commandName": "Project",
-      "commandLineArgs": "-i \"C:\\Trading\\WeBull Transactions\\input\" -o \"C:\\Trading\\WeBull Transactions\\output\""
-    }
-  }
-}

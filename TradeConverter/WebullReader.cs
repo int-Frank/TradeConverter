@@ -1,34 +1,41 @@
 ﻿using System.Globalization;
 
-namespace WebullConverter
+namespace TradeConverter
 {
-  public class WebullReader
+  public class WebullReader : IReader
   {
-    public class DTO
+    private static class HeaderStrings
     {
-      public string Symbol { get; set; } = string.Empty;
-      public string Name { get; set; } = string.Empty;
-      public string Currency { get; set; } = string.Empty;
-      public string Type { get; set; } = string.Empty;
-      public DateTime DateTimeEST { get; set; }
-      public Side Side { get; set; }
-      public double Quantity { get; set; }
-      public double Price { get; set; }
-      public double GrossAmount { get; set; }
-      public double NetAmount { get; set; }
-      public double Fee { get; set; }
-      public double GST { get; set; }
-      public string Exchange { get; set; } = string.Empty;
+      public static string Symbol = "Symbol";
+      public static string Name = "Name";
+      public static string Currency = "Currency";
+      public static string Type = "Type";
+      public static string TradeDate = "Trade Date";
+      public static string Time = "Time";
+      public static string BuySell = "Buy/Sell";
+      public static string Quantity = "Quantity";
+      public static string TradePrice = "Trade Price";
+      public static string GrossAmount = "Gross Amount";
+      public static string NetAmount = "Net Amount";
+      public static string CommFeeTax = "Comm/Fee/Tax";
+      public static string GST = "GST";
+      public static string Exchange = "Exchange";
+
+      public static string[] Columns => [ Symbol, Name, Currency, Type, TradeDate, Time, BuySell, Quantity, TradePrice, GrossAmount, NetAmount, CommFeeTax, GST, Exchange ];
     }
 
-    public DTO[] Entries { get; set; } = Array.Empty<DTO>();
-
-    public void Read(string filePath)
+    public bool TryRead(string filePath, out TradeEntry[] entries)
     {
+      if (!IsValidFile(filePath))
+      {
+        entries = Array.Empty<TradeEntry>();
+        return false;
+      }
+
       using (var reader = new StreamReader(filePath))
       {
         bool isFirstLine = true;
-        var dtos = new List<DTO>();
+        var dtos = new List<TradeEntry>();
         var header = new Dictionary<string, int>();
         int errors = 0;
 
@@ -49,10 +56,10 @@ namespace WebullConverter
           }
 
           var parts = ParseLine(line);
-          var dto = new DTO();
+          var dto = new TradeEntry();
           int index;
 
-          if (!header.TryGetValue("Symbol", out index) ||
+          if (!header.TryGetValue(HeaderStrings.Symbol, out index) ||
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Symbol from CSV");
@@ -61,7 +68,7 @@ namespace WebullConverter
           }
           dto.Symbol = Trim(parts[index]);
 
-          if (!header.TryGetValue("Name", out index) ||
+          if (!header.TryGetValue(HeaderStrings.Name, out index) ||
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Name from CSV");
@@ -70,7 +77,7 @@ namespace WebullConverter
           }
           dto.Name = Trim(parts[index]);
 
-          if (!header.TryGetValue("Currency", out index) ||
+          if (!header.TryGetValue(HeaderStrings.Currency, out index) ||
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Currency from CSV");
@@ -79,7 +86,7 @@ namespace WebullConverter
           }
           dto.Currency = Trim(parts[index]);
 
-          if (!header.TryGetValue("Type", out index) ||
+          if (!header.TryGetValue(HeaderStrings.Type, out index) ||
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Type from CSV");
@@ -88,11 +95,11 @@ namespace WebullConverter
           }
           dto.Type = Trim(parts[index]);
 
-          if (!header.TryGetValue("Trade Date", out index) ||
+          if (!header.TryGetValue(HeaderStrings.TradeDate, out index) ||
               index >= parts.Length ||
-              !header.TryGetValue("Time", out var timeIndex) ||
+              !header.TryGetValue(HeaderStrings.Time, out var timeIndex) ||
               timeIndex >= parts.Length ||
-              ! TryGetDateTime(Trim(parts[index]), Trim(parts[timeIndex]), out var dateTime))
+              !TryGetDateTime(Trim(parts[index]), Trim(parts[timeIndex]), out var dateTime))
           {
             Console.WriteLine($"Failed to read Date and Time from CSV");
             errors++;
@@ -100,7 +107,7 @@ namespace WebullConverter
           }
           dto.DateTimeEST = dateTime;
 
-          if (!header.TryGetValue("Type", out index) ||
+          if (!header.TryGetValue(HeaderStrings.Type, out index) ||
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Type from CSV");
@@ -109,7 +116,7 @@ namespace WebullConverter
           }
           dto.Type = Trim(parts[index]);
 
-          if (!header.TryGetValue("Buy/Sell", out index) ||
+          if (!header.TryGetValue(HeaderStrings.BuySell, out index) ||
               index >= parts.Length ||
               !TryGetSide(Trim(parts[index]), out var side))
           {
@@ -119,7 +126,7 @@ namespace WebullConverter
           }
           dto.Side = side;
 
-          if (!header.TryGetValue("Quantity", out index) ||
+          if (!header.TryGetValue(HeaderStrings.Quantity, out index) ||
               index >= parts.Length ||
               !double.TryParse(Trim(parts[index]), out var quantity))
           {
@@ -129,7 +136,7 @@ namespace WebullConverter
           }
           dto.Quantity = quantity;
 
-          if (!header.TryGetValue("Trade Price", out index) ||
+          if (!header.TryGetValue(HeaderStrings.TradePrice, out index) ||
               index >= parts.Length ||
               !double.TryParse(Trim(parts[index]), out var price))
           {
@@ -139,7 +146,7 @@ namespace WebullConverter
           }
           dto.Price = price;
 
-          if (!header.TryGetValue("Gross Amount", out index) ||
+          if (!header.TryGetValue(HeaderStrings.GrossAmount, out index) ||
               index >= parts.Length ||
               !double.TryParse(Trim(parts[index]), out var grossAmount))
           {
@@ -149,7 +156,7 @@ namespace WebullConverter
           }
           dto.GrossAmount = grossAmount;
 
-          if (!header.TryGetValue("Net Amount", out index) ||
+          if (!header.TryGetValue(HeaderStrings.NetAmount, out index) ||
               index >= parts.Length ||
               !double.TryParse(Trim(parts[index]), out var netAmount))
           {
@@ -159,7 +166,7 @@ namespace WebullConverter
           }
           dto.NetAmount = netAmount;
 
-          if (!header.TryGetValue("Comm/Fee/Tax", out index) ||
+          if (!header.TryGetValue(HeaderStrings.CommFeeTax, out index) ||
               index >= parts.Length ||
               !double.TryParse(Trim(parts[index]), out var fee))
           {
@@ -169,14 +176,14 @@ namespace WebullConverter
           }
           dto.Fee = fee;
 
-          if (header.TryGetValue("GST", out index) &&
+          if (header.TryGetValue(HeaderStrings.GST, out index) &&
               index < parts.Length &&
               double.TryParse(Trim(parts[index]), out var gst))
           {
             dto.GST = gst;
           }
 
-          if (!header.TryGetValue("Exchange", out index) ||
+          if (!header.TryGetValue(HeaderStrings.Exchange, out index) ||
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Exchange from CSV");
@@ -188,8 +195,17 @@ namespace WebullConverter
           dtos.Add(dto);
         }
 
-        Entries = dtos.ToArray();
+        entries = dtos.ToArray();
+        return true;
       }
+    }
+
+    private static bool IsValidFile(string filePath)
+    {
+      // Quick hack for now, just confirm the first line. Will bread if the column order changes.
+      string firstLine = File.ReadLines(filePath).First();
+      var header = $"{HeaderStrings.Symbol},{HeaderStrings.Name},{HeaderStrings.Currency},{HeaderStrings.Type},{HeaderStrings.TradeDate},{HeaderStrings.Time},{HeaderStrings.BuySell},{HeaderStrings.Quantity},{HeaderStrings.TradePrice},{HeaderStrings.GrossAmount},{HeaderStrings.NetAmount},{HeaderStrings.CommFeeTax},{HeaderStrings.GST},{HeaderStrings.Exchange}";
+      return firstLine == header;
     }
 
     private bool TryGetSide(string str, out Side side)
