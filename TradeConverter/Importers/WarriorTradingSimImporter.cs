@@ -2,12 +2,20 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace TradeConverter
+namespace TradeConverter.Importers
 {
-  public class WarriorTradingSimReader : IReader
+  public class WarriorTradingSimImporter : IImporter
   {
     public bool TryRead(string filePath, out TradeEntry[] entries)
     {
+      if (!IsValidFile(filePath))
+      {
+        entries = Array.Empty<TradeEntry>();
+        return false;
+      }
+
+      Console.WriteLine($"Importing Warrior Trading Sim file '{Path.GetFileName(filePath)}'...");
+
       var entriesList = new List<TradeEntry>();
 
       using (var reader = new StreamReader(filePath))
@@ -23,6 +31,7 @@ namespace TradeConverter
 
           if (!TryParseLine(line, out var entry) || entry is null)
           {
+            Console.WriteLine($"Failed!");
             entries = [];
             return false;
           }
@@ -31,9 +40,30 @@ namespace TradeConverter
         }
       }
 
+      Console.WriteLine("Done!");
       entries = entriesList.ToArray();
 
       return true;
+    }
+
+    private bool IsValidFile(string filePath)
+    {
+      using (var reader = new StreamReader(filePath))
+      {
+        while (!reader.EndOfStream)
+        {
+          var line = reader.ReadLine();
+
+          if (string.IsNullOrWhiteSpace(line))
+          {
+            continue;
+          }
+
+          return TryParseLine(line, out var entry) && entry is not null;
+        }
+      }
+
+      return false;
     }
 
     private bool TryParseLine(string line, out TradeEntry? entry)
@@ -62,20 +92,15 @@ namespace TradeConverter
 
     private bool TryAddDateTime(string date, string time, ref TradeEntry entry)
     {
-      string combined = $"{date} {time},GMT-04:00"; // EST
+      // Assume EST
+      string combined = $"{date} {time}";
 
-      var format = "dd/MM/yy HH:mm:ss,'GMT'zzz";
-      var provider = CultureInfo.InvariantCulture;
+      var format = "MM/dd/yy HH:mm:ss";
+      entry.DateTimeEST = DateTime.ParseExact(combined,
+                                              format,
+                                              CultureInfo.InvariantCulture,
+                                              DateTimeStyles.None);
 
-      if (!DateTimeOffset.TryParseExact(combined, format, provider, DateTimeStyles.None, out DateTimeOffset dto))
-      {
-        return false;
-      }
-
-      TimeZoneInfo nyZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-      var dateTime = TimeZoneInfo.ConvertTimeFromUtc(dto.UtcDateTime, nyZone);
-
-      entry.DateTimeEST = dateTime;
       return true;
     }
 

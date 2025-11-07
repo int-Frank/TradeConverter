@@ -1,8 +1,8 @@
 ﻿using System.Globalization;
 
-namespace TradeConverter
+namespace TradeConverter.Importers
 {
-  public class WebullReader : IReader
+  public class WebullImporter : IImporter
   {
     private static class HeaderStrings
     {
@@ -21,7 +21,7 @@ namespace TradeConverter
       public static string GST = "GST";
       public static string Exchange = "Exchange";
 
-      public static string[] Columns => [ Symbol, Name, Currency, Type, TradeDate, Time, BuySell, Quantity, TradePrice, GrossAmount, NetAmount, CommFeeTax, GST, Exchange ];
+      public static string[] Columns => [Symbol, Name, Currency, Type, TradeDate, Time, BuySell, Quantity, TradePrice, GrossAmount, NetAmount, CommFeeTax, GST, Exchange];
     }
 
     public bool TryRead(string filePath, out TradeEntry[] entries)
@@ -32,12 +32,13 @@ namespace TradeConverter
         return false;
       }
 
+      Console.WriteLine($"Importing WeBull file '{Path.GetFileName(filePath)}'...");
+
       using (var reader = new StreamReader(filePath))
       {
         bool isFirstLine = true;
         var dtos = new List<TradeEntry>();
         var header = new Dictionary<string, int>();
-        int errors = 0;
 
         while (!reader.EndOfStream)
         {
@@ -63,8 +64,8 @@ namespace TradeConverter
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Symbol from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Symbol = Trim(parts[index]);
 
@@ -72,8 +73,8 @@ namespace TradeConverter
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Name from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Name = Trim(parts[index]);
 
@@ -81,8 +82,8 @@ namespace TradeConverter
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Currency from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Currency = Trim(parts[index]);
 
@@ -90,8 +91,8 @@ namespace TradeConverter
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Type from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Type = Trim(parts[index]);
 
@@ -102,8 +103,8 @@ namespace TradeConverter
               !TryGetDateTime(Trim(parts[index]), Trim(parts[timeIndex]), out var dateTime))
           {
             Console.WriteLine($"Failed to read Date and Time from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.DateTimeEST = dateTime;
 
@@ -111,8 +112,8 @@ namespace TradeConverter
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Type from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Type = Trim(parts[index]);
 
@@ -121,8 +122,8 @@ namespace TradeConverter
               !TryGetSide(Trim(parts[index]), out var side))
           {
             Console.WriteLine($"Failed to read Buy/Sell from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Side = side;
 
@@ -131,8 +132,8 @@ namespace TradeConverter
               !double.TryParse(Trim(parts[index]), out var quantity))
           {
             Console.WriteLine($"Failed to read Quantity from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Quantity = quantity;
 
@@ -141,54 +142,54 @@ namespace TradeConverter
               !double.TryParse(Trim(parts[index]), out var price))
           {
             Console.WriteLine($"Failed to read Trade Price from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Price = price;
 
-          if (!header.TryGetValue(HeaderStrings.GrossAmount, out index) ||
-              index >= parts.Length ||
-              !double.TryParse(Trim(parts[index]), out var grossAmount))
-          {
-            Console.WriteLine($"Failed to read Gross Amount from CSV");
-            errors++;
-            continue;
-          }
-          dto.GrossAmount = grossAmount;
+          //if (!header.TryGetValue(HeaderStrings.GrossAmount, out index) ||
+          //    index >= parts.Length ||
+          //    !double.TryParse(Trim(parts[index]), out var grossAmount))
+          //{
+          //  Console.WriteLine($"Failed to read Gross Amount from CSV");
+          //  errors++;
+          //  continue;
+          //}
+          //dto.GrossAmount = grossAmount;
 
-          if (!header.TryGetValue(HeaderStrings.NetAmount, out index) ||
-              index >= parts.Length ||
-              !double.TryParse(Trim(parts[index]), out var netAmount))
-          {
-            Console.WriteLine($"Failed to read Net Amount from CSV");
-            errors++;
-            continue;
-          }
-          dto.NetAmount = netAmount;
+          //if (!header.TryGetValue(HeaderStrings.NetAmount, out index) ||
+          //    index >= parts.Length ||
+          //    !double.TryParse(Trim(parts[index]), out var netAmount))
+          //{
+          //  Console.WriteLine($"Failed to read Net Amount from CSV");
+          //  errors++;
+          //  continue;
+          //}
+          //dto.NetAmount = netAmount;
 
           if (!header.TryGetValue(HeaderStrings.CommFeeTax, out index) ||
               index >= parts.Length ||
               !double.TryParse(Trim(parts[index]), out var fee))
           {
             Console.WriteLine($"Failed to read Comm/Fee/Tax from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Fee = fee;
 
-          if (header.TryGetValue(HeaderStrings.GST, out index) &&
-              index < parts.Length &&
-              double.TryParse(Trim(parts[index]), out var gst))
-          {
-            dto.GST = gst;
-          }
+          //if (header.TryGetValue(HeaderStrings.GST, out index) &&
+          //    index < parts.Length &&
+          //    double.TryParse(Trim(parts[index]), out var gst))
+          //{
+          //  dto.GST = gst;
+          //}
 
           if (!header.TryGetValue(HeaderStrings.Exchange, out index) ||
               index >= parts.Length)
           {
             Console.WriteLine($"Failed to read Exchange from CSV");
-            errors++;
-            continue;
+            entries = [];
+            return false;
           }
           dto.Exchange = Trim(parts[index]);
 
@@ -196,13 +197,14 @@ namespace TradeConverter
         }
 
         entries = dtos.ToArray();
+        Console.WriteLine("Done!");
         return true;
       }
     }
 
     private static bool IsValidFile(string filePath)
     {
-      // Quick hack for now, just confirm the first line. Will bread if the column order changes.
+      // Quick hack for now, just confirm the first line.
       string firstLine = File.ReadLines(filePath).First();
       var header = $"{HeaderStrings.Symbol},{HeaderStrings.Name},{HeaderStrings.Currency},{HeaderStrings.Type},{HeaderStrings.TradeDate},{HeaderStrings.Time},{HeaderStrings.BuySell},{HeaderStrings.Quantity},{HeaderStrings.TradePrice},{HeaderStrings.GrossAmount},{HeaderStrings.NetAmount},{HeaderStrings.CommFeeTax},{HeaderStrings.GST},{HeaderStrings.Exchange}";
       return firstLine == header;
@@ -216,21 +218,22 @@ namespace TradeConverter
 
     private bool TryGetDateTime(string date, string time, out DateTime dateTime)
     {
-      // Add :00 as a quick fix for now
-      string combined = $"{date} {time}:00";
-
-      // Define format: yyyy/MM/dd HH:mm:ss 'GMT'zzz
-      var format = "yyyy/MM/dd HH:mm:ss,'GMT'zzz";
-      var provider = CultureInfo.InvariantCulture;
-
-      if (!DateTimeOffset.TryParseExact(combined, format, provider, DateTimeStyles.None, out DateTimeOffset dto))
+      // Assume EST, so only need the time itself
+      var timeParts = time.Split(',');
+      if (timeParts.Length < 1)
       {
         dateTime = default;
         return false;
       }
 
-      TimeZoneInfo nyZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-      dateTime = TimeZoneInfo.ConvertTimeFromUtc(dto.UtcDateTime, nyZone);
+      string combined = $"{date} {timeParts[0]}";
+
+      var format = "yyyy/MM/dd HH:mm:ss";
+
+      dateTime = DateTime.ParseExact(combined,
+                                     format,
+                                     CultureInfo.InvariantCulture,
+                                     DateTimeStyles.None);
 
       return true;
     }

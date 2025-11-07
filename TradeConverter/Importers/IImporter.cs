@@ -1,6 +1,6 @@
-﻿namespace TradeConverter
+﻿namespace TradeConverter.Importers
 {
-  public interface IReader
+  public interface IImporter
   {
     bool TryRead(string filePath, out TradeEntry[] entries);
   }

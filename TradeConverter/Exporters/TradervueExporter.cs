@@ -1,10 +1,12 @@
 ﻿using System.Globalization;
 
-namespace TradeConverter
+namespace TradeConverter.Exporters
 {
-  public class CSVWriter
+  public class TradervueExporter : IExporter
   {
-    public void WriteToFile(string filePath, TradeEntry[] entries)
+    public string Name => "Tradervue";
+
+    public bool TryWriteToFile(string filePath, TradeEntry[] entries)
     {
       using (StreamWriter writer = new StreamWriter(filePath))
       {
@@ -12,20 +14,22 @@ namespace TradeConverter
 
         foreach (var entry in entries)
         {
-          string nyDate = entry.DateTimeEST.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
-          string nyClock = entry.DateTimeEST.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
+          string estDate = entry.DateTimeEST.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
+          string estClock = entry.DateTimeEST.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
 
-          writer.Write($"{nyDate},");
-          writer.Write($"{nyClock},");
+          writer.Write($"{estDate},");
+          writer.Write($"{estClock},");
           writer.Write($"{entry.Symbol},");
           writer.Write($"{entry.Quantity},");
           writer.Write($"{entry.Price},");
           writer.Write($"{entry.Side},");
-          writer.Write("0,"); // Commision
+          writer.Write($"{entry.Commision},");
           writer.Write($"{entry.Fee},");
           writer.WriteLine("0"); // ECNFee
         }
       }
+
+      return true;
     }
   }
 }

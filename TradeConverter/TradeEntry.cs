@@ -10,10 +10,8 @@
     public Side Side { get; set; }
     public double Quantity { get; set; }
     public double Price { get; set; }
-    public double GrossAmount { get; set; }
-    public double NetAmount { get; set; }
+    public double Commision { get; set; }
     public double Fee { get; set; }
-    public double GST { get; set; }
     public string Exchange { get; set; } = string.Empty;
   }
 }

@@ -1,4 +1,6 @@
 ﻿using TradeConverter.Args;
+using TradeConverter.Exporters;
+using TradeConverter.Importers;
 
 namespace TradeConverter
 {
@@ -46,10 +48,7 @@ namespace TradeConverter
           entry.Side,
           entry.Quantity,
           entry.Price,
-          entry.GrossAmount,
-          entry.NetAmount,
           entry.Fee,
-          entry.GST,
           entry.Exchange
         ))
         .ToArray();
@@ -59,16 +58,21 @@ namespace TradeConverter
       var grouped = transactions
             .GroupBy(dto => dto.DateTimeEST.Date);
 
-      foreach (var group in grouped)
+      foreach (var exporter in context.Exporters)
       {
-        var entries = group.Select(dto => dto).ToArray();
+        foreach (var group in grouped)
+        {
+          var entries = group.Select(dto => dto).ToArray();
 
-        var date = group.Key.ToString("yyyy-MM-dd");
-        var fileName = $"{date}.csv";
-        var fullPath = Path.Combine(context.OutputPath, fileName);
+          var date = group.Key.ToString("yyyy-MM-dd");
+          var fileName = $"{exporter.Name}-{date}.csv";
+          var fullPath = Path.Combine(context.OutputPath, fileName);
 
-        var writer = new CSVWriter();
-        writer.WriteToFile(fullPath, entries);
+          if (!exporter.TryWriteToFile(fullPath, entries))
+          {
+            Console.WriteLine($"Failed to write file '{fileName}'");
+          }
+        }
       }
     }
 
@@ -76,12 +80,12 @@ namespace TradeConverter
     {
       var entries = Array.Empty<TradeEntry>();
 
-      if (new WebullReader().TryRead(file, out entries))
+      if (new WebullImporter().TryRead(file, out entries))
       {
         return entries;
       }
 
-      if (new WarriorTradingSimReader().TryRead(file, out entries))
+      if (new WarriorTradingSimImporter().TryRead(file, out entries))
       {
         return entries;
       }

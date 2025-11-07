@@ -1,9 +1,12 @@
-﻿namespace TradeConverter.Args
+﻿using TradeConverter.Exporters;
+
+namespace TradeConverter.Args
 {
   public class ConverterContext
   {
     public string InputPath { get; set; } = string.Empty;
     public string OutputPath { get; set; } = string.Empty;
+    public IExporter[] Exporters { get; set; } = Array.Empty<IExporter>();
   }
 
   public interface IParserState
@@ -76,6 +79,9 @@
     public ConverterContext Execute(string[] args)
     {
       var context = new ConverterContext();
+
+      context.Exporters = [new TradervueExporter()];
+
       var states = new Stack<IParserState>();
       states.Push(new BaseParserState());
 
