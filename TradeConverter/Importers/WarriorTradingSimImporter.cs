@@ -6,17 +6,17 @@ namespace TradeConverter.Importers
 {
   public class WarriorTradingSimImporter : IImporter
   {
-    public bool TryRead(string filePath, out TradeEntry[] entries)
+    public bool TryRead(string filePath, out Transaction[] entries)
     {
       if (!IsValidFile(filePath))
       {
-        entries = Array.Empty<TradeEntry>();
+        entries = Array.Empty<Transaction>();
         return false;
       }
 
       Console.WriteLine($"Importing Warrior Trading Sim file '{Path.GetFileName(filePath)}'...");
 
-      var entriesList = new List<TradeEntry>();
+      var entriesList = new List<Transaction>();
 
       using (var reader = new StreamReader(filePath))
       {
@@ -66,7 +66,7 @@ namespace TradeConverter.Importers
       return false;
     }
 
-    private bool TryParseLine(string line, out TradeEntry? entry)
+    private bool TryParseLine(string line, out Transaction? entry)
     {
       string[] parts = line.Split(',');
 
@@ -78,7 +78,7 @@ namespace TradeConverter.Importers
 
       // Because there is no header for these files, we are going to be very strict with parsing
 
-      entry = new TradeEntry();
+      entry = new Transaction();
 
       // Add assumptions
       entry.Currency = "USD";
@@ -90,7 +90,7 @@ namespace TradeConverter.Importers
              TryAddPrice(parts[5], ref entry);
     }
 
-    private bool TryAddDateTime(string date, string time, ref TradeEntry entry)
+    private bool TryAddDateTime(string date, string time, ref Transaction entry)
     {
       // Assume EST
       string combined = $"{date} {time}";
@@ -104,13 +104,13 @@ namespace TradeConverter.Importers
       return true;
     }
 
-    private static bool TryAddSymbol(string input, ref TradeEntry entry)
+    private static bool TryAddSymbol(string input, ref Transaction entry)
     {
       entry.Symbol = input;
       return Regex.IsMatch(input, @"^[A-Z]{1,8}$");
     }
 
-    private static bool TryAddSide(string input, ref TradeEntry entry)
+    private static bool TryAddSide(string input, ref Transaction entry)
     {
       if (input == "B") entry.Side = Side.Buy;
       else if (input == "S") entry.Side = Side.Sell;
@@ -118,7 +118,7 @@ namespace TradeConverter.Importers
       return true;
     }
 
-    private static bool TryAddQuantity(string input, ref TradeEntry entry)
+    private static bool TryAddQuantity(string input, ref Transaction entry)
     {
       var success = int.TryParse(input, out var quantity);
 
@@ -130,7 +130,7 @@ namespace TradeConverter.Importers
       return success;
     }
 
-    private static bool TryAddPrice(string input, ref TradeEntry entry)
+    private static bool TryAddPrice(string input, ref Transaction entry)
     {
       var success = double.TryParse(input, out var price);
 

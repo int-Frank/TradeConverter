@@ -76,9 +76,9 @@ namespace TradeConverter
       }
     }
 
-    private TradeEntry[] ReadEntries(string file)
+    private Transaction[] ReadEntries(string file)
     {
-      var entries = Array.Empty<TradeEntry>();
+      var entries = Array.Empty<Transaction>();
 
       if (new WebullImporter().TryRead(file, out entries))
       {
@@ -91,7 +91,7 @@ namespace TradeConverter
       }
 
       Console.WriteLine($"Failed to identify file '{file}'");
-      return Array.Empty<TradeEntry>();
+      return Array.Empty<Transaction>();
     }
   }
 }

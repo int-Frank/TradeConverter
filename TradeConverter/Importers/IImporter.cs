@@ -2,6 +2,6 @@
 {
   public interface IImporter
   {
-    bool TryRead(string filePath, out TradeEntry[] entries);
+    bool TryRead(string filePath, out Transaction[] entries);
   }
 }

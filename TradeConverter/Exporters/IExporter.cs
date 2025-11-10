@@ -3,6 +3,6 @@
   public interface IExporter
   {
     string Name { get; }
-    bool TryWriteToFile(string filePath, TradeEntry[] entries);
+    bool TryWriteToFile(string filePath, Transaction[] entries);
   }
 }

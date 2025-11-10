@@ -24,11 +24,11 @@ namespace TradeConverter.Importers
       public static string[] Columns => [Symbol, Name, Currency, Type, TradeDate, Time, BuySell, Quantity, TradePrice, GrossAmount, NetAmount, CommFeeTax, GST, Exchange];
     }
 
-    public bool TryRead(string filePath, out TradeEntry[] entries)
+    public bool TryRead(string filePath, out Transaction[] entries)
     {
       if (!IsValidFile(filePath))
       {
-        entries = Array.Empty<TradeEntry>();
+        entries = Array.Empty<Transaction>();
         return false;
       }
 
@@ -37,7 +37,7 @@ namespace TradeConverter.Importers
       using (var reader = new StreamReader(filePath))
       {
         bool isFirstLine = true;
-        var dtos = new List<TradeEntry>();
+        var dtos = new List<Transaction>();
         var header = new Dictionary<string, int>();
 
         while (!reader.EndOfStream)
@@ -57,7 +57,7 @@ namespace TradeConverter.Importers
           }
 
           var parts = ParseLine(line);
-          var dto = new TradeEntry();
+          var dto = new Transaction();
           int index;
 
           if (!header.TryGetValue(HeaderStrings.Symbol, out index) ||

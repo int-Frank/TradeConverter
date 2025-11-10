@@ -6,7 +6,7 @@ namespace TradeConverter.Exporters
   {
     public string Name => "Tradervue";
 
-    public bool TryWriteToFile(string filePath, TradeEntry[] entries)
+    public bool TryWriteToFile(string filePath, Transaction[] entries)
     {
       using (StreamWriter writer = new StreamWriter(filePath))
       {
