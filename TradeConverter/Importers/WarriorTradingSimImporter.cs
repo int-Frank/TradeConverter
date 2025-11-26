@@ -6,6 +6,16 @@ namespace TradeConverter.Importers
 {
   public class WarriorTradingSimImporter : IImporter
   {
+    private static class HeaderStrings
+    {
+      public const string Symbol = "Symbol";
+      public const string Date = "Date";
+      public const string Time = "Time";
+      public const string Side = "Side";
+      public const string Quantity = "Quantity";
+      public const string Price = "Price";
+    }
+
     public bool TryRead(string filePath, out Transaction[] entries)
     {
       if (!IsValidFile(filePath))
@@ -20,6 +30,8 @@ namespace TradeConverter.Importers
 
       using (var reader = new StreamReader(filePath))
       {
+        Dictionary<string, int>? header = null;
+
         while (!reader.EndOfStream)
         {
           var line = reader.ReadLine();
@@ -29,7 +41,13 @@ namespace TradeConverter.Importers
             continue;
           }
 
-          if (!TryParseLine(line, out var entry) || entry is null)
+          if (header is null)
+          {
+            header = ReadHeader(line);
+            continue;
+          }
+
+          if (!TryParseLine(line, header, out var entry) || entry is null)
           {
             Console.WriteLine($"Failed!");
             entries = [];
@@ -50,6 +68,8 @@ namespace TradeConverter.Importers
     {
       using (var reader = new StreamReader(filePath))
       {
+        Dictionary<string, int>? header = null;
+
         while (!reader.EndOfStream)
         {
           var line = reader.ReadLine();
@@ -59,39 +79,84 @@ namespace TradeConverter.Importers
             continue;
           }
 
-          return TryParseLine(line, out var entry) && entry is not null;
+          if (header is null)
+          {
+            header = ReadHeader(line);
+            continue;
+          }
+
+          return TryParseLine(line, header, out var entry) && entry is not null;
         }
       }
 
       return false;
     }
 
-    private bool TryParseLine(string line, out Transaction? entry)
+    private Dictionary<string, int> ReadHeader(string line)
     {
+      var header = new Dictionary<string, int>();
+
       string[] parts = line.Split(',');
 
-      if (parts.Length != 7)
+      for (int i = 0; i < parts.Length; i++)
       {
-        entry = null;
-        return false;
+        switch (parts[i])
+        {
+          case HeaderStrings.Time:
+            header[HeaderStrings.Time] = i; 
+            break;
+          case HeaderStrings.Date:
+            header[HeaderStrings.Date] = i;
+            break;
+          case HeaderStrings.Price:
+            header[HeaderStrings.Price] = i;
+            break;
+          case HeaderStrings.Symbol:
+            header[HeaderStrings.Symbol] = i;
+            break;
+          case HeaderStrings.Side:
+            header[HeaderStrings.Side] = i;
+            break;
+          case HeaderStrings.Quantity:
+            header[HeaderStrings.Quantity] = i;
+            break;
+          default:
+            break;
+        }
       }
 
-      // Because there is no header for these files, we are going to be very strict with parsing
+      return header;
+    }
+
+    private bool TryParseLine(string line, Dictionary<string, int> header, out Transaction? entry)
+    {
+      string[] parts = line.Split(',');
 
       entry = new Transaction();
 
       // Add assumptions
       entry.Currency = "USD";
 
-      return TryAddDateTime(parts[0], parts[1], ref entry) &&
-             TryAddSymbol(parts[2], ref entry) &&
-             TryAddSide(parts[3], ref entry) &&
-             TryAddQuantity(parts[4], ref entry) &&
-             TryAddPrice(parts[5], ref entry);
+      return TryAddDateTime(parts, header, ref entry) &&
+             TryAddSymbol(parts, header, ref entry) &&
+             TryAddSide(parts, header, ref entry) &&
+             TryAddQuantity(parts, header, ref entry) &&
+             TryAddPrice(parts, header, ref entry);
     }
 
-    private bool TryAddDateTime(string date, string time, ref Transaction entry)
+    private bool TryAddDateTime(string[] parts, Dictionary<string, int> header, ref Transaction entry)
     {
+      if (!header.TryGetValue(HeaderStrings.Date, out var dateIndex) ||
+          !header.TryGetValue(HeaderStrings.Time, out var timeIndex) ||
+          dateIndex >= parts.Length ||
+          timeIndex >= parts.Length)
+      {
+        return false;
+      }
+
+      var date = parts[dateIndex];
+      var time = parts[timeIndex];
+
       // Assume EST
       string combined = $"{date} {time}";
 
@@ -104,23 +169,46 @@ namespace TradeConverter.Importers
       return true;
     }
 
-    private static bool TryAddSymbol(string input, ref Transaction entry)
+
+
+    private static bool TryAddSymbol(string[] parts, Dictionary<string, int> header, ref Transaction entry)
     {
-      entry.Symbol = input;
-      return Regex.IsMatch(input, @"^[A-Z]{1,8}$");
+      if (!header.TryGetValue(HeaderStrings.Symbol, out var index) ||
+          index >= parts.Length)
+      {
+        return false;
+      }
+
+      entry.Symbol = parts[index];
+      return Regex.IsMatch(entry.Symbol, @"^[A-Z]{1,8}$");
     }
 
-    private static bool TryAddSide(string input, ref Transaction entry)
+    private static bool TryAddSide(string[] parts, Dictionary<string, int> header, ref Transaction entry)
     {
-      if (input == "B") entry.Side = Side.Buy;
-      else if (input == "S") entry.Side = Side.Sell;
+      if (!header.TryGetValue(HeaderStrings.Side, out var index) ||
+          index >= parts.Length)
+      {
+        return false;
+      }
+
+      var side = parts[index];
+
+      if (side == "B") entry.Side = Side.Buy;
+      else if (side == "S") entry.Side = Side.Sell;
+      else if (side == "SS") entry.Side = Side.Sell;
       else return false;
       return true;
     }
 
-    private static bool TryAddQuantity(string input, ref Transaction entry)
+    private static bool TryAddQuantity(string[] parts, Dictionary<string, int> header, ref Transaction entry)
     {
-      var success = int.TryParse(input, out var quantity);
+      if (!header.TryGetValue(HeaderStrings.Quantity, out var index) ||
+          index >= parts.Length)
+      {
+        return false;
+      }
+
+      var success = int.TryParse(parts[index], out var quantity);
 
       if (success)
       {
@@ -130,9 +218,15 @@ namespace TradeConverter.Importers
       return success;
     }
 
-    private static bool TryAddPrice(string input, ref Transaction entry)
+    private static bool TryAddPrice(string[] parts, Dictionary<string, int> header, ref Transaction entry)
     {
-      var success = double.TryParse(input, out var price);
+      if (!header.TryGetValue(HeaderStrings.Price, out var index) ||
+          index >= parts.Length)
+      {
+        return false;
+      }
+
+      var success = double.TryParse(parts[index], out var price);
 
       if (success)
       {

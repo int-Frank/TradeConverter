@@ -6,20 +6,20 @@ namespace TradeConverter.Importers
   {
     private static class HeaderStrings
     {
-      public static string Symbol = "Symbol";
-      public static string Name = "Name";
-      public static string Currency = "Currency";
-      public static string Type = "Type";
-      public static string TradeDate = "Trade Date";
-      public static string Time = "Time";
-      public static string BuySell = "Buy/Sell";
-      public static string Quantity = "Quantity";
-      public static string TradePrice = "Trade Price";
-      public static string GrossAmount = "Gross Amount";
-      public static string NetAmount = "Net Amount";
-      public static string CommFeeTax = "Comm/Fee/Tax";
-      public static string GST = "GST";
-      public static string Exchange = "Exchange";
+      public const string Symbol = "Symbol";
+      public const string Name = "Name";
+      public const string Currency = "Currency";
+      public const string Type = "Type";
+      public const string TradeDate = "Trade Date";
+      public const string Time = "Time";
+      public const string BuySell = "Buy/Sell";
+      public const string Quantity = "Quantity";
+      public const string TradePrice = "Trade Price";
+      public const string GrossAmount = "Gross Amount";
+      public const string NetAmount = "Net Amount";
+      public const string CommFeeTax = "Comm/Fee/Tax";
+      public const string GST = "GST";
+      public const string Exchange = "Exchange";
 
       public static string[] Columns => [Symbol, Name, Currency, Type, TradeDate, Time, BuySell, Quantity, TradePrice, GrossAmount, NetAmount, CommFeeTax, GST, Exchange];
     }
